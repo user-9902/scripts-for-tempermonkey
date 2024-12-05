@@ -6,28 +6,30 @@ const template = `{{ template }}`
   'use strict'
 
   // runing immediately
-  let json = ''
-  const send = window.XMLHttpRequest.prototype.send
-  window.XMLHttpRequest.prototype.send = function () {
-    send.call(this, ...arguments)
+  let json = window.__playinfo__ ?? ''
+  if (!json) {
+    const send = window.XMLHttpRequest.prototype.send
+    window.XMLHttpRequest.prototype.send = function () {
+      send.call(this, ...arguments)
 
-    setTimeout(() => {
-      const onreadystatechange = this.onreadystatechange
-      this.onreadystatechange = function () {
-        if (onreadystatechange) onreadystatechange.call(this, ...arguments)
+      setTimeout(() => {
+        const onreadystatechange = this.onreadystatechange
+        this.onreadystatechange = function () {
+          if (onreadystatechange) onreadystatechange.call(this, ...arguments)
 
-        if (
-          this.responseURL.startsWith(
-            'https://api.bilibili.com/x/player/wbi/playurl',
-          ) &&
-          this.responseText
-        ) {
-          try {
-            json = JSON.parse(this.responseText)
-          } catch {}
+          if (
+            this.responseURL.startsWith(
+              'https://api.bilibili.com/x/player/wbi/playurl',
+            ) &&
+            this.responseText
+          ) {
+            try {
+              json = JSON.parse(this.responseText)
+            } catch {}
+          }
         }
-      }
-    }, 10)
+      })
+    }
   }
 
   document.documentElement.setAttribute(
@@ -66,7 +68,7 @@ const template = `{{ template }}`
 
   function darktheme() {
     let theme = localStorage.getItem('__bili_plugin_theme__')
-    theme = theme == 'dark' ? '' : 'dark'
+    theme = theme === 'dark' ? '' : 'dark'
     document.documentElement.setAttribute('theme', theme)
     localStorage.setItem('__bili_plugin_theme__', theme)
   }

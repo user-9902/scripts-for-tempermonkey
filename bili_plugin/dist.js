@@ -1,7 +1,7 @@
 const style = `#bili_plugin {
   .bp-container {
     position: fixed;
-    left: 8px;
+    left: 2px;
     top: 20vh;
     display: flex;
     flex-direction: column;
@@ -23,13 +23,26 @@ const style = `#bili_plugin {
       }
       p {
         color: #9499a0;
+        font-size: 12px;
       }
     }
   }
 }
+
+html[theme='dark'] {
+  .link-navbar-more {
+    background-color: #17181a !important;
+  }
+  #app {
+    background-color: var(--bg1);
+  }
+}
 `
 
-const template = `<div class="bp-container">
+const template = `<div
+  class="bp-container"
+  theme="light"
+>
   <div id="bp-container-downloadvideo">
     <svg
       data-v-d2e47025=""
@@ -72,7 +85,7 @@ const template = `<div class="bp-container">
     <p>视频截屏</p>
   </div>
 
-  <div>
+  <div id="bp-container-darktheme">
     <svg
       data-v-d2e47025=""
       xmlns="http://www.w3.org/2000/svg"
@@ -92,25 +105,36 @@ const template = `<div class="bp-container">
   'use strict'
 
   // runing immediately
-  let json = ''
-  const send = window.XMLHttpRequest.prototype.send
-  window.XMLHttpRequest.prototype.send = function () {
-    send.call(this, ...arguments)
+  let json = window.__playinfo__ ?? ''
+  if (!json) {
+    const send = window.XMLHttpRequest.prototype.send
+    window.XMLHttpRequest.prototype.send = function () {
+      send.call(this, ...arguments)
 
-    setTimeout(() => {
-      const onreadystatechange = this.onreadystatechange
-      this.onreadystatechange = function () {
-        if (onreadystatechange) onreadystatechange.call(this, ...arguments)
-        if (
-          this.responseURL.startsWith(
-            'https://api.bilibili.com/x/player/wbi/playurl',
-          )
-        ) {
-          json = JSON.parse(this.responseText)
+      setTimeout(() => {
+        const onreadystatechange = this.onreadystatechange
+        this.onreadystatechange = function () {
+          if (onreadystatechange) onreadystatechange.call(this, ...arguments)
+
+          if (
+            this.responseURL.startsWith(
+              'https://api.bilibili.com/x/player/wbi/playurl',
+            ) &&
+            this.responseText
+          ) {
+            try {
+              json = JSON.parse(this.responseText)
+            } catch {}
+          }
         }
-      }
-    }, 20)
+      })
+    }
   }
+
+  document.documentElement.setAttribute(
+    'theme',
+    localStorage.getItem('__bili_plugin_theme__'),
+  )
 
   // utils
   function download(url, fullName) {
@@ -141,6 +165,13 @@ const template = `<div class="bp-container">
     download(url, new Date().getTime() + '.png')
   }
 
+  function darktheme() {
+    let theme = localStorage.getItem('__bili_plugin_theme__')
+    theme = theme === 'dark' ? '' : 'dark'
+    document.documentElement.setAttribute('theme', theme)
+    localStorage.setItem('__bili_plugin_theme__', theme)
+  }
+
   // controller
   const styleEl = document.createElement('style')
   styleEl.textContent = style
@@ -150,6 +181,11 @@ const template = `<div class="bp-container">
   document.body.appendChild(templateEl)
   templateEl.id = 'bili_plugin'
 
+  const videoBtn = document.getElementById('bp-container-downloadvideo')
+  videoBtn.addEventListener('click', () =>
+    download(json.data.dash.video[0].baseUrl, document.title + '.mp4'),
+  )
+
   const audioBtn = document.getElementById('bp-container-downloadaudio')
   audioBtn.addEventListener('click', () =>
     download(json.data.dash.audio[0].baseUrl, document.title + '.mp3'),
@@ -158,8 +194,6 @@ const template = `<div class="bp-container">
   const screenShotBtn = document.getElementById('bp-container-screenshot')
   screenShotBtn.addEventListener('click', () => screenshot())
 
-  const videoBtn = document.getElementById('bp-container-downloadvideo')
-  videoBtn.addEventListener('click', () =>
-    download(json.data.dash.video[0].baseUrl, document.title + '.mp4'),
-  )
+  const darkThemeBtn = document.getElementById('bp-container-darktheme')
+  darkThemeBtn.addEventListener('click', () => darktheme())
 })()
