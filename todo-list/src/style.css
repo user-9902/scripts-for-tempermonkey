@@ -1,0 +1,40 @@
+#todolist_plugin {
+  .bp-container {
+    position: fixed;
+    right: 20px;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    padding: 10px;
+    background-color: red;
+
+    div {
+      border-radius: 8px;
+      border: 1px #e3e5e7 solid;
+      padding: 4px;
+      text-align: center;
+      margin-top: 8px;
+      cursor: pointer;
+      &:hover {
+        background-color: #e3e5e7;
+      }
+      svg {
+        width: 28px;
+      }
+      p {
+        color: #9499a0;
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+html[theme='dark'] {
+  .link-navbar-more {
+    background-color: #17181a !important;
+  }
+  #app {
+    background-color: var(--bg1);
+  }
+}
