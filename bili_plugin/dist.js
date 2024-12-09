@@ -5,37 +5,50 @@ const style = `#bili_plugin {
     top: 20vh;
     display: flex;
     flex-direction: column;
-    background-color: white;
+    background-color: var(--bg1);
     padding: 10px;
 
     div {
       border-radius: 8px;
-      border: 1px #e3e5e7 solid;
+      border: 1px var(--bg2) solid;
       padding: 4px;
       text-align: center;
       margin-top: 8px;
       cursor: pointer;
       &:hover {
-        background-color: #e3e5e7;
+        background-color: var(--bg3);
       }
       svg {
         width: 28px;
       }
       p {
         color: #9499a0;
-        font-size: 12px;
+        font-size: var(--text1);
       }
     }
   }
 }
 
-html[theme='dark'] {
-  .link-navbar-more {
-    background-color: #17181a !important;
-  }
-  #app {
-    background-color: var(--bg1);
-  }
+/*  dark theme */
+:root[theme='dark'] {
+  --Ga1: #61666d; /* 不推荐改基本颜色。因为webcomponent的样在沙盒中，无法直接影响，才出此下策 */
+
+  --bg1: var(--Ga9);
+  --bg2: var(--Ga8);
+  --bg3: var(--Ga8);
+  --bg1_float: var(--Ga10);
+  --bg2_float: var(--Ga8);
+  --bg3_float: var(--Ga9);
+  --text1: var(--Ga2);
+  --text2: var(--Ga3);
+  --text3: var(--Ga4);
+  --text4: var(--Ga5);
+  --graph_bg_thin: var(--Ga7);
+  --graph_bg_regular: var(--Ga8);
+  --graph_bg_thick: var(--G7);
+  --line_regular: var(--Ga7);
+  --graph_weak: var(--Ga7);
+  --graph_bg_regular_float: var(--Ga8);
 }
 `
 
@@ -51,7 +64,7 @@ const template = `<div
     >
       <path
         fill="#00AEEC"
-        d="M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112M256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384"
+        d="M704 768V256H128v512zm64-416 192-96v512l-192-96v128a32 32 0 0 1-32 32H96a32 32 0 0 1-32-32V224a32 32 0 0 1 32-32h640a32 32 0 0 1 32 32zm0 71.552v176.896l128 64V359.552zM192 320h192v64H192z"
       ></path>
     </svg>
     <p>下载视频</p>
