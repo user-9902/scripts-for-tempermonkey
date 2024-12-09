@@ -31,7 +31,7 @@ const style = `#bili_plugin {
 
 /*  dark theme */
 :root[theme='dark'] {
-  --Ga1: #61666d; /* 不推荐改基本颜色。因为webcomponent的样在沙盒中，无法直接影响，才出此下策 */
+  --Ga1: #61666d; /* 不推荐改基本颜色。因为webcomponent的样式在沙盒中，无法直接影响，才出此下策 */
 
   --bg1: var(--Ga9);
   --bg2: var(--Ga8);

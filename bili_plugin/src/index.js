@@ -62,8 +62,13 @@ const template = `{{ template }}`
     canvas.width = videoEl.videoWidth
     canvas.height = videoEl.videoHeight
     context.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-    const url = canvas.toDataURL('image/png')
-    download(url, new Date().getTime() + '.png')
+    canvas.toBlob(async blob => {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob,
+        }),
+      ])
+    }, 'image/png') // 指定导出的图片格式
   }
 
   function darktheme() {
