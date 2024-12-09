@@ -2,11 +2,9 @@ const style = `#bili_plugin {
   .bp-container {
     position: fixed;
     left: 2px;
-    top: 20vh;
+    top: max(70px, 20vh);
     display: flex;
     flex-direction: column;
-    background-color: var(--bg1);
-    padding: 10px;
 
     div {
       border-radius: 8px;
@@ -15,6 +13,7 @@ const style = `#bili_plugin {
       text-align: center;
       margin-top: 8px;
       cursor: pointer;
+      background-color: var(--bg1);
       &:hover {
         background-color: var(--bg3);
       }
@@ -23,7 +22,8 @@ const style = `#bili_plugin {
       }
       p {
         color: #9499a0;
-        font-size: var(--text1);
+        font-size: 12px;
+        line-height: 18px;
       }
     }
   }
@@ -31,7 +31,7 @@ const style = `#bili_plugin {
 
 /*  dark theme */
 :root[theme='dark'] {
-  --Ga1: #61666d; /* 不推荐改基本颜色。因为webcomponent的样式在沙盒中，无法直接影响，才出此下策 */
+  --Ga1: #61666d; /* 不推荐改基本颜色。因为webcomponent的样在沙盒中，无法直接影响，才出此下策 */
 
   --bg1: var(--Ga9);
   --bg2: var(--Ga8);
@@ -46,6 +46,7 @@ const style = `#bili_plugin {
   --graph_bg_thin: var(--Ga7);
   --graph_bg_regular: var(--Ga8);
   --graph_bg_thick: var(--G7);
+  --line_light: var(--Ga7);
   --line_regular: var(--Ga7);
   --graph_weak: var(--Ga7);
   --graph_bg_regular_float: var(--Ga8);
@@ -56,7 +57,10 @@ const template = `<div
   class="bp-container"
   theme="light"
 >
-  <div id="bp-container-downloadvideo">
+  <div
+    id="bp-container-downloadvideo"
+    style="display: none"
+  >
     <svg
       data-v-d2e47025=""
       xmlns="http://www.w3.org/2000/svg"
@@ -70,7 +74,10 @@ const template = `<div
     <p>下载视频</p>
   </div>
 
-  <div id="bp-container-downloadaudio">
+  <div
+    id="bp-container-downloadaudio"
+    style="display: none"
+  >
     <svg
       data-v-d2e47025=""
       xmlns="http://www.w3.org/2000/svg"
@@ -84,7 +91,10 @@ const template = `<div
     <p>下载音频</p>
   </div>
 
-  <div id="bp-container-screenshot">
+  <div
+    id="bp-container-screenshot"
+    style="display: none"
+  >
     <svg
       data-v-d2e47025=""
       xmlns="http://www.w3.org/2000/svg"
@@ -98,7 +108,10 @@ const template = `<div
     <p>视频截屏</p>
   </div>
 
-  <div id="bp-container-darktheme">
+  <div
+    id="bp-container-darktheme"
+    style="display: none"
+  >
     <svg
       data-v-d2e47025=""
       xmlns="http://www.w3.org/2000/svg"
@@ -117,9 +130,66 @@ const template = `<div
 ;(function () {
   'use strict'
 
+  // controller
+  const styleEl = document.createElement('style')
+  styleEl.textContent = style
+  document.head.appendChild(styleEl)
+  const templateEl = document.createElement('div')
+  templateEl.innerHTML = template
+  document.body.appendChild(templateEl)
+  templateEl.id = 'bili_plugin'
+
+  const videoBtn = templateEl.querySelector('#bp-container-downloadvideo')
+  videoBtn.addEventListener('click', () =>
+    download(info.playinfo.data.dash.video[0].baseUrl, document.title + '.mp4'),
+  )
+
+  const audioBtn = templateEl.querySelector('#bp-container-downloadaudio')
+  audioBtn.addEventListener('click', () =>
+    download(info.playinfo.data.dash.audio[0].baseUrl, document.title + '.mp3'),
+  )
+
+  const screenShotBtn = templateEl.querySelector('#bp-container-screenshot')
+  screenShotBtn.addEventListener('click', () => screenshot())
+
+  const darkThemeBtn = templateEl.querySelector('#bp-container-darktheme')
+  darkThemeBtn.addEventListener('click', () => darktheme())
+
   // runing immediately
-  let json = window.__playinfo__ ?? ''
-  if (!json) {
+
+  // 是否能进行操作视频
+  const info = new Proxy(
+    {
+      playinfo: null,
+      theme: null,
+    },
+    {
+      set(target, key, val, arg) {
+        if (key === 'playinfo' && val) {
+          videoBtn.style.display = 'inline'
+          audioBtn.style.display = 'inline'
+          screenShotBtn.style.display = 'inline'
+        }
+        if (key === 'theme') {
+          const theme = val === 'dark' ? 'dark' : ''
+          localStorage.setItem('__bili_plugin_theme__', theme)
+          document.documentElement.setAttribute('theme', theme)
+        }
+        return Reflect.set(target, key, val, arg)
+      },
+    },
+  )
+
+  // 支持深色模式的白名单
+  const host = location.hostname
+  if (['search.', 'www.'].some(i => host.startsWith(i))) {
+    darkThemeBtn.style.display = 'inline'
+
+    info.theme = localStorage.getItem('__bili_plugin_theme__')
+  }
+
+  info.playinfo = window.__playinfo__
+  if (!info.playinfo) {
     const send = window.XMLHttpRequest.prototype.send
     window.XMLHttpRequest.prototype.send = function () {
       send.call(this, ...arguments)
@@ -136,18 +206,19 @@ const template = `<div
             this.responseText
           ) {
             try {
-              json = JSON.parse(this.responseText)
+              const responseText = JSON.parse(this.responseText)
+              if (
+                responseText.code == '0' &&
+                responseText?.data?.dash?.audio?.length < 5
+              ) {
+                info.playinfo = responseText
+              }
             } catch {}
           }
         }
       })
     }
   }
-
-  document.documentElement.setAttribute(
-    'theme',
-    localStorage.getItem('__bili_plugin_theme__'),
-  )
 
   // utils
   function download(url, fullName) {
@@ -174,39 +245,16 @@ const template = `<div
     canvas.width = videoEl.videoWidth
     canvas.height = videoEl.videoHeight
     context.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-    const url = canvas.toDataURL('image/png')
-    download(url, new Date().getTime() + '.png')
+    canvas.toBlob(async blob => {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob,
+        }),
+      ])
+    }, 'image/png') // 指定导出的图片格式
   }
 
   function darktheme() {
-    let theme = localStorage.getItem('__bili_plugin_theme__')
-    theme = theme === 'dark' ? '' : 'dark'
-    document.documentElement.setAttribute('theme', theme)
-    localStorage.setItem('__bili_plugin_theme__', theme)
+    info.theme = info.theme === 'dark' ? '' : 'dark'
   }
-
-  // controller
-  const styleEl = document.createElement('style')
-  styleEl.textContent = style
-  document.head.appendChild(styleEl)
-  const templateEl = document.createElement('div')
-  templateEl.innerHTML = template
-  document.body.appendChild(templateEl)
-  templateEl.id = 'bili_plugin'
-
-  const videoBtn = document.getElementById('bp-container-downloadvideo')
-  videoBtn.addEventListener('click', () =>
-    download(json.data.dash.video[0].baseUrl, document.title + '.mp4'),
-  )
-
-  const audioBtn = document.getElementById('bp-container-downloadaudio')
-  audioBtn.addEventListener('click', () =>
-    download(json.data.dash.audio[0].baseUrl, document.title + '.mp3'),
-  )
-
-  const screenShotBtn = document.getElementById('bp-container-screenshot')
-  screenShotBtn.addEventListener('click', () => screenshot())
-
-  const darkThemeBtn = document.getElementById('bp-container-darktheme')
-  darkThemeBtn.addEventListener('click', () => darktheme())
 })()

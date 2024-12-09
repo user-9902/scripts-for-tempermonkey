@@ -34,7 +34,7 @@
 油猴配置：
 
 - 运行时期：选择 document-end
-- 用户包括：添加正则 /^https:\/\/www\.bilibili\.com\/.+/
+- 用户包括：添加正则 /^https:\/\/[^\.]+\.bilibili\.com\/.+/
 
 
 

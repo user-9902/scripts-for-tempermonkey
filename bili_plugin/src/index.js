@@ -5,9 +5,66 @@ const template = `{{ template }}`
 ;(function () {
   'use strict'
 
+  // controller
+  const styleEl = document.createElement('style')
+  styleEl.textContent = style
+  document.head.appendChild(styleEl)
+  const templateEl = document.createElement('div')
+  templateEl.innerHTML = template
+  document.body.appendChild(templateEl)
+  templateEl.id = 'bili_plugin'
+
+  const videoBtn = templateEl.querySelector('#bp-container-downloadvideo')
+  videoBtn.addEventListener('click', () =>
+    download(info.playinfo.data.dash.video[0].baseUrl, document.title + '.mp4'),
+  )
+
+  const audioBtn = templateEl.querySelector('#bp-container-downloadaudio')
+  audioBtn.addEventListener('click', () =>
+    download(info.playinfo.data.dash.audio[0].baseUrl, document.title + '.mp3'),
+  )
+
+  const screenShotBtn = templateEl.querySelector('#bp-container-screenshot')
+  screenShotBtn.addEventListener('click', () => screenshot())
+
+  const darkThemeBtn = templateEl.querySelector('#bp-container-darktheme')
+  darkThemeBtn.addEventListener('click', () => darktheme())
+
   // runing immediately
-  let json = window.__playinfo__ ?? ''
-  if (!json) {
+
+  // 是否能进行操作视频
+  const info = new Proxy(
+    {
+      playinfo: null,
+      theme: null,
+    },
+    {
+      set(target, key, val, arg) {
+        if (key === 'playinfo' && val) {
+          videoBtn.style.display = 'inline'
+          audioBtn.style.display = 'inline'
+          screenShotBtn.style.display = 'inline'
+        }
+        if (key === 'theme') {
+          const theme = val === 'dark' ? 'dark' : ''
+          localStorage.setItem('__bili_plugin_theme__', theme)
+          document.documentElement.setAttribute('theme', theme)
+        }
+        return Reflect.set(target, key, val, arg)
+      },
+    },
+  )
+
+  // 支持深色模式的白名单
+  const host = location.hostname
+  if (['search.', 'www.'].some(i => host.startsWith(i))) {
+    darkThemeBtn.style.display = 'inline'
+
+    info.theme = localStorage.getItem('__bili_plugin_theme__')
+  }
+
+  info.playinfo = window.__playinfo__
+  if (!info.playinfo) {
     const send = window.XMLHttpRequest.prototype.send
     window.XMLHttpRequest.prototype.send = function () {
       send.call(this, ...arguments)
@@ -24,18 +81,19 @@ const template = `{{ template }}`
             this.responseText
           ) {
             try {
-              json = JSON.parse(this.responseText)
+              const responseText = JSON.parse(this.responseText)
+              if (
+                responseText.code == '0' &&
+                responseText?.data?.dash?.audio?.length < 5
+              ) {
+                info.playinfo = responseText
+              }
             } catch {}
           }
         }
       })
     }
   }
-
-  document.documentElement.setAttribute(
-    'theme',
-    localStorage.getItem('__bili_plugin_theme__'),
-  )
 
   // utils
   function download(url, fullName) {
@@ -72,34 +130,6 @@ const template = `{{ template }}`
   }
 
   function darktheme() {
-    let theme = localStorage.getItem('__bili_plugin_theme__')
-    theme = theme === 'dark' ? '' : 'dark'
-    document.documentElement.setAttribute('theme', theme)
-    localStorage.setItem('__bili_plugin_theme__', theme)
+    info.theme = info.theme === 'dark' ? '' : 'dark'
   }
-
-  // controller
-  const styleEl = document.createElement('style')
-  styleEl.textContent = style
-  document.head.appendChild(styleEl)
-  const templateEl = document.createElement('div')
-  templateEl.innerHTML = template
-  document.body.appendChild(templateEl)
-  templateEl.id = 'bili_plugin'
-
-  const videoBtn = document.getElementById('bp-container-downloadvideo')
-  videoBtn.addEventListener('click', () =>
-    download(json.data.dash.video[0].baseUrl, document.title + '.mp4'),
-  )
-
-  const audioBtn = document.getElementById('bp-container-downloadaudio')
-  audioBtn.addEventListener('click', () =>
-    download(json.data.dash.audio[0].baseUrl, document.title + '.mp3'),
-  )
-
-  const screenShotBtn = document.getElementById('bp-container-screenshot')
-  screenShotBtn.addEventListener('click', () => screenshot())
-
-  const darkThemeBtn = document.getElementById('bp-container-darktheme')
-  darkThemeBtn.addEventListener('click', () => darktheme())
 })()
