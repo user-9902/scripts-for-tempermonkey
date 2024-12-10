@@ -9,7 +9,7 @@
     div {
       border-radius: 8px;
       border: 1px var(--bg2) solid;
-      padding: 4px;
+      padding: 2px;
       text-align: center;
       margin-top: 8px;
       cursor: pointer;
@@ -21,9 +21,10 @@
         width: 28px;
       }
       p {
+        margin: 0;
         color: #9499a0;
         font-size: 12px;
-        line-height: 18px;
+        line-height: 1;
       }
     }
   }

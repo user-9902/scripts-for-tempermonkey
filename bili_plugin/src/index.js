@@ -15,13 +15,14 @@ const template = `{{ template }}`
   templateEl.id = 'bili_plugin'
 
   const videoBtn = templateEl.querySelector('#bp-container-downloadvideo')
-  videoBtn.addEventListener('click', () =>
-    download(info.playinfo.data.dash.video[0].baseUrl, document.title + '.mp4'),
-  )
+  videoBtn.addEventListener('click', downloadVideo)
 
   const audioBtn = templateEl.querySelector('#bp-container-downloadaudio')
   audioBtn.addEventListener('click', () =>
-    download(info.playinfo.data.dash.audio[0].baseUrl, document.title + '.mp3'),
+    download(
+      config.playinfo.data.dash.audio[0].baseUrl,
+      document.title + '.mp3',
+    ),
   )
 
   const screenShotBtn = templateEl.querySelector('#bp-container-screenshot')
@@ -31,12 +32,11 @@ const template = `{{ template }}`
   darkThemeBtn.addEventListener('click', () => darktheme())
 
   // runing immediately
-
-  // 是否能进行操作视频
-  const info = new Proxy(
+  const config = new Proxy(
     {
       playinfo: null,
       theme: null,
+      recodModule: true, // b站音视频分开的，这里提供了两种模式，false：直接下载无音频的视频；true：webrtc录制模式，需完整播放视频完成下载
     },
     {
       set(target, key, val, arg) {
@@ -60,11 +60,11 @@ const template = `{{ template }}`
   if (['search.', 'www.'].some(i => host.startsWith(i))) {
     darkThemeBtn.style.display = 'inline'
 
-    info.theme = localStorage.getItem('__bili_plugin_theme__')
+    config.theme = localStorage.getItem('__bili_plugin_theme__')
   }
 
-  info.playinfo = window.__playinfo__
-  if (!info.playinfo) {
+  config.playinfo = window.__playinfo__
+  if (!config.playinfo) {
     const send = window.XMLHttpRequest.prototype.send
     window.XMLHttpRequest.prototype.send = function () {
       send.call(this, ...arguments)
@@ -86,7 +86,7 @@ const template = `{{ template }}`
                 responseText.code == '0' &&
                 responseText?.data?.dash?.audio?.length < 5
               ) {
-                info.playinfo = responseText
+                config.playinfo = responseText
               }
             } catch {}
           }
@@ -96,6 +96,49 @@ const template = `{{ template }}`
   }
 
   // utils
+  async function downloadVideo() {
+    if (config.recodModule) {
+      const videoEl = document.getElementsByTagName('video')?.[0]
+      if (!videoEl) return
+
+      videoEl.currentTime = 0.1
+      videoEl.pause()
+      videoEl.addEventListener(
+        'play',
+        () => {
+          let recordedChunks = []
+          // 这里代码同异步处理有问题，临时方案
+          const mimeType = 'video/webm'
+          let mr = new MediaRecorder(videoEl.captureStream(), { mimeType })
+
+          mr.ondataavailable = function (event) {
+            if (event.data.size > 0) {
+              recordedChunks.push(event.data)
+            }
+          }
+
+          mr.onstop = function () {
+            const blob = new Blob(recordedChunks, { type: mimeType })
+            const url = URL.createObjectURL(blob)
+            download(url, document.title)
+            recordedChunks = []
+          }
+
+          mr.start()
+
+          videoEl.addEventListener('stop', () => mr.stop(), { once: true })
+        },
+        { once: true },
+      )
+      videoEl.play()
+    } else {
+      download(
+        config.playinfo.data.dash.video[0].baseUrl,
+        document.title + '.mp4',
+      )
+    }
+  }
+
   function download(url, fullName) {
     fetch(url)
       .then(res => res.blob())
@@ -130,6 +173,6 @@ const template = `{{ template }}`
   }
 
   function darktheme() {
-    info.theme = info.theme === 'dark' ? '' : 'dark'
+    config.theme = config.theme === 'dark' ? '' : 'dark'
   }
 })()
