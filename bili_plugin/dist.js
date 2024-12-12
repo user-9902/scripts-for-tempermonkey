@@ -24,7 +24,7 @@ const style = `#bili_plugin {
         margin: 0;
         color: #9499a0;
         font-size: 12px;
-        line-height: 1;
+        line-height: 18px;
       }
     }
   }
@@ -181,43 +181,50 @@ const template = `<div
     },
   )
 
-  // 支持深色模式的白名单
   const host = location.hostname
+  const path = location.pathname
+  // 插件作用域于整个b站，而b站又有许多子域名，我们用白名单的方式来管理插件的作用域
+  // 支持深色模式的白名单
   if (['search.', 'www.'].some(i => host.startsWith(i))) {
     darkThemeBtn.style.display = 'inline'
 
     config.theme = localStorage.getItem('__bili_plugin_theme__')
   }
+  // 支持下载的白名单
+  if (
+    host.startsWith('www.') &&
+    ['/video', '/list'].some(i => path.startsWith(i))
+  ) {
+    config.playinfo = window.__playinfo__
+    if (!config.playinfo) {
+      const send = window.XMLHttpRequest.prototype.send
+      window.XMLHttpRequest.prototype.send = function () {
+        send.call(this, ...arguments)
 
-  config.playinfo = window.__playinfo__
-  if (!config.playinfo) {
-    const send = window.XMLHttpRequest.prototype.send
-    window.XMLHttpRequest.prototype.send = function () {
-      send.call(this, ...arguments)
+        setTimeout(() => {
+          const onreadystatechange = this.onreadystatechange
+          this.onreadystatechange = function () {
+            if (onreadystatechange) onreadystatechange.call(this, ...arguments)
 
-      setTimeout(() => {
-        const onreadystatechange = this.onreadystatechange
-        this.onreadystatechange = function () {
-          if (onreadystatechange) onreadystatechange.call(this, ...arguments)
-
-          if (
-            this.responseURL.startsWith(
-              'https://api.bilibili.com/x/player/wbi/playurl',
-            ) &&
-            this.responseText
-          ) {
-            try {
-              const responseText = JSON.parse(this.responseText)
-              if (
-                responseText.code == '0' &&
-                responseText?.data?.dash?.audio?.length < 5
-              ) {
-                config.playinfo = responseText
-              }
-            } catch {}
+            if (
+              this.responseURL.startsWith(
+                'https://api.bilibili.com/x/player/wbi/playurl',
+              ) &&
+              this.responseText
+            ) {
+              try {
+                const responseText = JSON.parse(this.responseText)
+                if (
+                  responseText.code == '0' &&
+                  responseText?.data?.dash?.audio?.length < 5
+                ) {
+                  config.playinfo = responseText
+                }
+              } catch {}
+            }
           }
-        }
-      })
+        })
+      }
     }
   }
 
