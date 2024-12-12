@@ -28,7 +28,7 @@
   // csdn
   else if (host.endsWith('.csdn.net')) {
     const el = document.getElementById('toolbarBox')
-    for (let i = 0; i < el.chilren.length - 1; i++) {
+    for (let i = 0; i < el.children.length - 1; i++) {
       el.children[i].display = 'none'
     }
   }

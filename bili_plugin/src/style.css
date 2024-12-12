@@ -2,19 +2,18 @@
   .bp-container {
     position: fixed;
     left: 2px;
-    top: 20vh;
+    top: max(70px, 20vh);
     display: flex;
     flex-direction: column;
-    background-color: var(--bg1);
-    padding: 10px;
 
     div {
       border-radius: 8px;
       border: 1px var(--bg2) solid;
-      padding: 4px;
+      padding: 2px;
       text-align: center;
       margin-top: 8px;
       cursor: pointer;
+      background-color: var(--bg1);
       &:hover {
         background-color: var(--bg3);
       }
@@ -22,8 +21,10 @@
         width: 28px;
       }
       p {
+        margin: 0;
         color: #9499a0;
-        font-size: var(--text1);
+        font-size: 12px;
+        line-height: 18px;
       }
     }
   }
@@ -46,6 +47,7 @@
   --graph_bg_thin: var(--Ga7);
   --graph_bg_regular: var(--Ga8);
   --graph_bg_thick: var(--G7);
+  --line_light: var(--Ga7);
   --line_regular: var(--Ga7);
   --graph_weak: var(--Ga7);
   --graph_bg_regular_float: var(--Ga8);
