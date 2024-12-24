@@ -1,3 +1,5 @@
+// https://github.com/user-9902/scripts-for-tempermonkey
+
 const style = `{{ style  }}`
 
 const template = `{{ template }}`
@@ -59,7 +61,7 @@ const template = `{{ template }}`
   const path = location.pathname
   // 插件作用域于整个b站，而b站又有许多子域名，我们用白名单的方式来管理插件的作用域
   // 支持深色模式的白名单
-  if (['search.', 'www.'].some(i => host.startsWith(i))) {
+  if (['t.', 'search.', 'www.'].some(i => host.startsWith(i))) {
     darkThemeBtn.style.display = 'inline'
 
     config.theme = localStorage.getItem('__bili_plugin_theme__')
