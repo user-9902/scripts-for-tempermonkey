@@ -1,5 +1,8 @@
+// https://github.com/user-9902/scripts-for-tempermonkey
+
 const style = `#bili_plugin {
   .bp-container {
+    z-index: 3;
     position: fixed;
     left: 2px;
     top: max(70px, 20vh);
@@ -51,6 +54,11 @@ const style = `#bili_plugin {
   --line_regular: var(--Ga7);
   --graph_weak: var(--Ga7);
   --graph_bg_regular_float: var(--Ga8);
+}
+:root[theme='dark'] {
+  .bg {
+    background-image: url('https://ts1.cn.mm.bing.net/th/id/R-C.94a89bd5deec36265c56d2d1901c0315?rik=%2fToD1tKPXOqPgw&riu=http%3a%2f%2fpic.qianye88.com%2fpic%2fee6b4f18c26f8c761bc552c93699e63c.jpg&ehk=uV0XzxT22m3TJY7C%2fMX8Ifz2FGs0NcqWVv3sxg9T6aw%3d&risl=&pid=ImgRaw&r=0') !important;
+  }
 }
 `
 
@@ -185,7 +193,7 @@ const template = `<div
   const path = location.pathname
   // 插件作用域于整个b站，而b站又有许多子域名，我们用白名单的方式来管理插件的作用域
   // 支持深色模式的白名单
-  if (['search.', 'www.'].some(i => host.startsWith(i))) {
+  if (['t.', 'search.', 'www.'].some(i => host.startsWith(i))) {
     darkThemeBtn.style.display = 'inline'
 
     config.theme = localStorage.getItem('__bili_plugin_theme__')
