@@ -1,0 +1,13 @@
+#vg-container {
+  position: absolute;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  z-index: 99999;
+  background-color: #eee;
+  cursor: pointer;
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}

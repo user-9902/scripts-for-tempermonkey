@@ -55,11 +55,13 @@
   --graph_bg_thick: var(--Ga8);
   --graph_bg_thin_rgb: 24, 24, 24;
 
-  #app > .bg {
-    background-image: url('https://cdn.pixabay.com/photo/2018/03/27/15/58/flowers-3266383_1280.jpg') !important;
-  }
-  #app > .bgc {
-    background-color: var(--Ga10) !important;
+  #app {
+    .bg {
+      background-image: url('https://cdn.pixabay.com/photo/2018/03/27/15/58/flowers-3266383_1280.jpg') !important;
+    }
+    .bgc {
+      background-color: var(--Ga10) !important;
+    }
   }
   .bili-dyn-card-reserve__card {
     .bili-dyn-card-reserve__desc__first {
