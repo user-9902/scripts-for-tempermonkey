@@ -54,6 +54,7 @@
   --graph_bg_regular_float: var(--Ga8);
   --graph_bg_thick: var(--Ga8);
   --graph_bg_thin_rgb: 24, 24, 24;
+  --bg1_rgb: var(--Ga8);
 
   #app {
     .bg {
@@ -67,5 +68,11 @@
     .bili-dyn-card-reserve__desc__first {
       color: var(--Ga2);
     }
+  }
+  .opus-module-content {
+    color: var(--Ga2);
+  }
+  .message-bgc {
+    background-color: var(--Ga8);
   }
 }

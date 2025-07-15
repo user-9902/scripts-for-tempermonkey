@@ -38,34 +38,54 @@ const template = `{{ template }}`
       const videoEl = document.getElementsByTagName('video')?.[0]
       if (!videoEl) return
 
-      videoEl.currentTime = 0.1
+      // 1. 完全重置视频状态
       videoEl.pause()
+      videoEl.currentTime = 0.1 // 不知道为什么回到开头录制，视频会卡住，b站的反录制？
+
+      // 2. 等待视频真正回到起点
+      await new Promise(resolve => {
+        videoEl.addEventListener('seeked', resolve, { once: true })
+      })
+
+      // 3. 准备录制
+      const recordedChunks = []
+      const mimeType = 'video/webm;codecs=vp9'
+      const stream = videoEl.captureStream()
+      const mr = new MediaRecorder(stream, { mimeType })
+
+      mr.ondataavailable = event => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data)
+        }
+      }
+
+      mr.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: mimeType })
+        const url = URL.createObjectURL(blob)
+        download(url, document.title)
+      }
+
+      // 4. 确保在视频真正开始播放后再启动录制
       videoEl.addEventListener(
         'play',
         () => {
-          let recordedChunks = []
-          const mimeType = 'video/webm'
-          let mr = new MediaRecorder(videoEl.captureStream(), { mimeType })
-
-          mr.ondataavailable = function (event) {
-            if (event.data.size > 0) {
-              recordedChunks.push(event.data)
-            }
-          }
-
-          mr.onstop = function () {
-            const blob = new Blob(recordedChunks, { type: mimeType })
-            const url = URL.createObjectURL(blob)
-            download(url, document.title)
-            recordedChunks = []
-          }
-
-          mr.start()
-
-          videoEl.addEventListener('stop', () => mr.stop(), { once: true })
+          // 延迟100ms确保画面已经开始渲染
+          setTimeout(() => mr.start(2000), 100)
         },
         { once: true },
       )
+
+      // 5. 添加停止监听
+      videoEl.addEventListener(
+        'stop',
+        () => {
+          mr.state === 'recording' && mr.stop()
+          stream.getTracks().forEach(track => track.stop())
+        },
+        { once: true },
+      )
+
+      // 6. 开始播放
       videoEl.play()
     } else {
       download(
@@ -114,12 +134,15 @@ const template = `{{ template }}`
     videoEl.style.transform = videoEl.style.transform ? '' : 'rotateY(180deg)'
   }
 
-  function darktheme() {
+  function changeTheme() {
     config.theme = config.theme === 'dark' ? '' : 'dark'
   }
 
   // init
+  const NAMESPACE = 'bili_plugin'
   const document = top.document
+  // 防重
+  if (document.getElementById(NAMESPACE)) return
   // template init
   const styleEl = document.createElement('style')
   styleEl.textContent = style
@@ -127,7 +150,7 @@ const template = `{{ template }}`
   const templateEl = document.createElement('div')
   templateEl.innerHTML = template
   document.body.appendChild(templateEl)
-  templateEl.id = 'bili_plugin'
+  templateEl.id = NAMESPACE
 
   // var init
   videoBtn = templateEl.querySelector('#bp-container-downloadvideo')
@@ -148,12 +171,12 @@ const template = `{{ template }}`
   reverseBtn.addEventListener('click', () => reverse())
 
   darkThemeBtn = templateEl.querySelector('#bp-container-darktheme')
-  darkThemeBtn.addEventListener('click', () => darktheme())
+  darkThemeBtn.addEventListener('click', () => changeTheme())
 
   const host = location.hostname
   const path = location.pathname
   // 插件作用域于整个b站，而b站又有许多子域名，我们用白名单的方式来管理插件的作用域
-  // 支持深色模式的白名单
+  // 支持深色模式的子域名
   if (['t.', 'search.', 'www.', 'message.'].some(i => host.startsWith(i))) {
     darkThemeBtn.style.display = 'inline'
     config.theme = localStorage.getItem('__bili_plugin_theme__')
